@@ -1,6 +1,6 @@
 let browseMode='folders';
 try{if(localStorage.getItem('quiet-browse-mode')==='recents')browseMode='recents';}catch{}
-const expandedFolders=new Set(['customers','technologies','generic']);
+const expandedFolders=new Set();
 try{const saved=JSON.parse(localStorage.getItem('quiet-expanded-folders'));if(Array.isArray(saved)){expandedFolders.clear();for(const id of saved)expandedFolders.add(id);}}catch{}
 function saveExpanded(){try{localStorage.setItem('quiet-expanded-folders',JSON.stringify([...expandedFolders]));}catch{}}
 function revealFolder(id){let f=folders.find(f=>f.id===id);while(f){expandedFolders.add(f.id);f=folders.find(p=>p.id===f.parent);}saveExpanded();}
@@ -15,7 +15,7 @@ drawRecents=function(){
   folderSearch.hidden=sidebarAdd.hidden=browseMode==='recents';
   if(browseMode==='recents'){recentOnly();return;}
   const list=$('recent-notes');list.replaceChildren();
-  const all=makeButton('All notes','Browse all notes',()=>browseFolder('*'));all.className='folder-all';all.dataset.folderDrop='*';all.title='All notes · Drop a folder here to move it to the root';if(folderFilter==='*')all.setAttribute('aria-current','page');list.append(all);
+  const all=makeButton('All notes','Browse all notes',()=>browseFolder('*'));all.className='folder-all';all.dataset.folderDrop='*';all.title='All notes · Drop a folder or note here to move it to the root';if(folderFilter==='*')all.setAttribute('aria-current','page');list.append(all);
   const query=folderSearch.value.trim().toLowerCase();
   const visible=new Set();
   if(query)for(const f of folders.filter(f=>Folders.path(folders,f.id).toLowerCase().includes(query))){let cur=f;while(cur){visible.add(cur.id);cur=folders.find(p=>p.id===cur.parent);}}
@@ -35,17 +35,19 @@ drawRecents=function(){
     if(expanded){
       for(const child of children)row(child,depth+1);
       const contained=notes.filter(n=>!n.deleted&&n.folderId===f.id).sort((a,b)=>(a.title||'Untitled note').localeCompare(b.title||'Untitled note'));
-      for(const n of contained){
-        const title=n.title||'Untitled note';
-        const noteButton=makeButton('',`Open note ${Folders.path(folders,f.id)} / ${title}`,()=>openNote(n.id));noteButton.className='folder-note';noteButton.dataset.noteId=n.id;noteButton.draggable=true;noteButton.title=title;noteButton.style.paddingLeft=`${(depth+1)*14+22}px`;
-        const sheet=document.createElementNS('http://www.w3.org/2000/svg','svg');sheet.setAttribute('viewBox','0 0 24 24');sheet.setAttribute('aria-hidden','true');sheet.setAttribute('focusable','false');sheet.classList.add('note-sheet');
-        const paper=document.createElementNS('http://www.w3.org/2000/svg','path');paper.setAttribute('d','M5 3h9l5 5v13H5Z M14 3v5h5 M8 12h8 M8 16h8');sheet.append(paper);
-        const label=document.createElement('span');label.textContent=title;noteButton.append(sheet,label);
-        if(selectedTab===n.id)noteButton.setAttribute('aria-current','page');list.append(noteButton);
-      }
+      for(const n of contained)noteRow(n,depth+1,Folders.path(folders,f.id));
     }
   }
+  function noteRow(n,depth,folderPath){
+    const title=n.title||'Untitled note';
+    const noteButton=makeButton('',`Open note ${folderPath?folderPath+' / ':''}${title}`,()=>openNote(n.id));noteButton.className='folder-note';noteButton.dataset.noteId=n.id;noteButton.draggable=true;noteButton.title=title;noteButton.style.paddingLeft=`${depth*14+22}px`;
+    const sheet=document.createElementNS('http://www.w3.org/2000/svg','svg');sheet.setAttribute('viewBox','0 0 24 24');sheet.setAttribute('aria-hidden','true');sheet.setAttribute('focusable','false');sheet.classList.add('note-sheet');
+    const paper=document.createElementNS('http://www.w3.org/2000/svg','path');paper.setAttribute('d','M5 3h9l5 5v13H5Z M14 3v5h5 M8 12h8 M8 16h8');sheet.append(paper);
+    const label=document.createElement('span');label.textContent=title;noteButton.append(sheet,label);
+    if(selectedTab===n.id)noteButton.setAttribute('aria-current','page');list.append(noteButton);
+  }
   for(const r of Folders.children(folders,null))row(r,0);
+  if(!query)for(const n of notes.filter(n=>!n.deleted&&n.folderId===null).sort((a,b)=>(a.title||'Untitled note').localeCompare(b.title||'Untitled note')))noteRow(n,0,'');
   if(query&&!visible.size){const p=document.createElement('p');p.className='recents-empty';p.textContent='No matching folders';list.append(p);}
 };
 browseSelect.onchange=()=>{browseMode=browseSelect.value;try{localStorage.setItem('quiet-browse-mode',browseMode);}catch{}drawRecents();};folderSearch.oninput=drawRecents;
@@ -111,7 +113,7 @@ function showCreateSubmenu(focus=false){
 }
 function closeFolderMenu(focus=false){hideCreateSubmenu();folderMenu.hidden=true;if(focus&&menuAnchor?.isConnected)menuAnchor.focus();}
 function attachFolderMenu(element,id){
-  element.dataset.folderId=id;element.dataset.folderDrop=id;element.draggable=id!=='generic';
+  element.dataset.folderId=id;element.dataset.folderDrop=id;element.draggable=true;
   element.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();openFolderMenu(id,e.clientX,e.clientY,element);});
   element.addEventListener('keydown',e=>{if(e.key==='ContextMenu'||(e.shiftKey&&e.key==='F10')){e.preventDefault();const rect=element.getBoundingClientRect();openFolderMenu(id,rect.left,rect.bottom,element);}});
 }
@@ -120,7 +122,7 @@ function openFolderMenu(id,x,y,anchor){
   folderMenu.setAttribute('aria-label','Folder actions');menuFolder=id;menuAnchor=anchor.matches('button')?anchor:anchor.querySelector('.folder-select');
   hideCreateSubmenu();folderCreate=null;folderSubmenu=null;folderMenu.replaceChildren();
   const kind=folders.find(f=>f.id===id).kind;
-  function actionButton(label,action){const b=makeButton(label,label,()=>{closeFolderMenu();action();});b.setAttribute('role','menuitem');b.disabled=storageFailed||(label==='Delete folder'&&id==='generic');b.addEventListener('pointerenter',hideCreateSubmenu);folderMenu.append(b);return b;}
+  function actionButton(label,action){const b=makeButton(label,label,()=>{closeFolderMenu();action();});b.setAttribute('role','menuitem');b.disabled=storageFailed;b.addEventListener('pointerenter',hideCreateSubmenu);folderMenu.append(b);return b;}
   if(kind==='gallery')actionButton('Upload photos…',()=>window.Galleries?.upload(id));
   else if(kind==='gantt')actionButton('Add task…',()=>window.GanttUI?.add(id));
   else if(kind==='todo')actionButton('Add task…',()=>window.TodoUI?.add(id));
@@ -158,7 +160,7 @@ function deleteFolder(id){
   try{
     const previous={folders,notes},result=Folders.remove(folders,notes,id),label=Folders.path(folders,id);
     // Preserve the complete hierarchy and notes before removing a folder.
-    localStorage.setItem('quiet-notes-before-folder-delete',JSON.stringify({version:4,folders,notes}));
+    localStorage.setItem('quiet-notes-before-folder-delete',JSON.stringify({version:5,folders,notes}));
     folders=result.folders;notes=result.notes;
     if(!persist()){folders=previous.folders;notes=previous.notes;return;}
     const deletedActive=active&&result.removed.has(active.folderId);
@@ -166,7 +168,7 @@ function deleteFolder(id){
     for(const removed of result.removed)expandedFolders.delete(removed);saveExpanded();
     if(result.removed.has(folderFilter))folderFilter='*';
     if(deletedActive)showNotes();else render();
-    deleteBackup.hidden=false;toast(`Deleted ${label}. Its notes are in Trash under Generic.`);
+    deleteBackup.hidden=false;toast(`Deleted ${label}. Its notes are in Trash.`);
   }catch(error){toast(error.message);}
 }
 const deleteBackup=makeButton('Export last folder deletion backup…','Export last folder deletion backup',()=>{

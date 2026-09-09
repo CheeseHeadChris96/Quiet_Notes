@@ -11,7 +11,7 @@ try {
     folders=loaded.folders;notes=loaded.notes;
   }
 } catch { storageFailed = true; }
-function folderLabel(n){return Folders.path(folders,n.folderId||'generic');}
+function folderLabel(n){return Folders.path(folders,n.folderId);}
 function inFolder(n){return folderFilter==='*'||n.folderId===folderFilter;}
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 5000); }
 let saveSucceeded=!storageFailed;
@@ -24,7 +24,7 @@ function setSaveStatus(message){
 function persist() {
   setSaveStatus('Unsaved');
   if (storageFailed) { setSaveStatus('Stored notes need recovery');toast('Stored notes could not be read. Export a backup before making changes.'); return false; }
-  try { localStorage.setItem(KEY, JSON.stringify({version:4,notes,folders})); setSaveStatus('Saved on this device'); return true; }
+  try { localStorage.setItem(KEY, JSON.stringify({version:5,notes,folders})); setSaveStatus('Saved on this device'); return true; }
   catch { setSaveStatus('Not saved — export a backup'); toast('Storage is full or unavailable. Export a backup to protect your notes.'); return false; }
 }
 function makeButton(text, label, fn) { const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.setAttribute('aria-label', label); b.addEventListener('click', fn); return b; }
@@ -61,7 +61,7 @@ function updateEditor() {
   const pinLabel=active.pinned?'Unpin note':'Pin note';$('pin-note').setAttribute('aria-label',pinLabel);$('pin-note').title=pinLabel;$('pin-note').setAttribute('aria-pressed',String(active.pinned));
   $('word-count').textContent=`${active.body.trim().split(/\s+/).filter(Boolean).length} words`;
 }
-function noteDestination(){const f=folders.find(f=>f.id===folderFilter);return !f?'generic':f.kind?(f.parent||'generic'):f.id;}
+function noteDestination(){const f=folders.find(f=>f.id===folderFilter);return !f?null:f.kind?f.parent:f.id;}
 function newNote() {
   if (storageFailed) return toast('Your saved data needs recovery before new notes can be added.');
   const now=Date.now(); const n={id:crypto.randomUUID(),title:'',body:'',color:'neutral',folderId:noteDestination(),created:now,updated:now,pinned:false,deleted:false}; notes.unshift(n); persist(); setView('all'); $('search').value='';render();openNote(n.id);$('note-body').focus();
@@ -77,7 +77,7 @@ $('search').oninput=render;$('sort').onchange=render;
 function setTheme(dark) {document.documentElement.dataset.theme=dark?'dark':'light';const label=dark?'Light mode':'Dark mode';$('theme').setAttribute('aria-label',label);$('theme').title=label;}
 try {setTheme(localStorage.getItem('quiet-theme')==='dark');}catch{}
 $('theme').onclick=()=>{const dark=document.documentElement.dataset.theme!=='dark';setTheme(dark);try{localStorage.setItem('quiet-theme',dark?'dark':'light');}catch{}};
-$('export').onclick=()=>{const data=storageFailed?localStorage.getItem(KEY):JSON.stringify({version:4,notes,folders},null,2);const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`quiet-notes-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+$('export').onclick=()=>{const data=storageFailed?localStorage.getItem(KEY):JSON.stringify({version:5,notes,folders},null,2);const url=URL.createObjectURL(new Blob([data],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=`quiet-notes-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
 $('import').onclick=()=>$('import-file').click();
 $('import-file').onchange=async e=>{
   const file=e.target.files[0];if(!file)return;

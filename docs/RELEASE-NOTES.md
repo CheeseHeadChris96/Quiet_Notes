@@ -1,5 +1,12 @@
 Quiet Notes is a local desktop workspace for notes, photos, Gantt charts, and to-do lists.
 
+## Changes in 0.21.1
+
+- New installations start with no folders.
+- Empty, unchanged Generic, Customers, and Technologies starter folders are removed when upgrading. Populated, renamed, and custom folders are preserved.
+- Notes can live at the root, and any folder can be deleted. Deleted notes remain recoverable in Trash.
+- Backups use version 5 to support notes without a folder; older backups can still be imported. Backups made with this version require 0.21.1 or newer.
+
 ## Choose your installer
 
 - **mac-arm64.dmg**: Macs with Apple silicon (M1 or newer).

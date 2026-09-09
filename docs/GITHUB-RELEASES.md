@@ -23,8 +23,8 @@ Skip `git remote add` if `origin` is already configured. If the commit has alrea
 2. Tag that commit with the matching version. For this build:
 
    ```sh
-   git tag v0.21.0
-   git push origin v0.21.0
+   git tag v0.21.1
+   git push origin v0.21.1
    ```
 
 3. Open the repository's **Actions → Build installers** run. All three builds must pass before the release job runs. Windows checks install the app, launch a window, and run its uninstaller. Mac checks validate the DMG and ad-hoc app signature.

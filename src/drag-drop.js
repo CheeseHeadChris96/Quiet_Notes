@@ -7,8 +7,7 @@ function validateDrop(item,target){
   const parent=target.dataset.folderDrop==='*'?null:target.dataset.folderDrop;
   if(item.kind==='folder')Folders.move(folders,item.id,parent);
   else {
-    if(parent===null)throw new Error('Drop a note onto a folder.');
-    if(!folders.some(f=>f.id===parent&&!f.kind)||!notes.some(n=>n.id===item.id&&!n.deleted))throw new Error('This note cannot be moved here.');
+    if((parent!==null&&!folders.some(f=>f.id===parent&&!f.kind))||!notes.some(n=>n.id===item.id&&!n.deleted))throw new Error('This note cannot be moved here.');
   }
   return parent;
 }

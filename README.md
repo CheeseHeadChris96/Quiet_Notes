@@ -245,3 +245,7 @@ Tab inside a bulleted or numbered list indents the current item or selected item
 The + below the list creates a top-level task. A small + on each task creates a subtask. Click a task name to edit it. Drag to the top or bottom edge of another row to reorder; drop in its center to nest. The highlighted line or row indicates the destination. Drop onto the bottom + area to move a task back to the root at the end. Parents move with their descendants, and circular nesting is blocked. Escape cancels a drag.
 
 Task order is now manual and stays unchanged when tasks are completed. Filters retain ancestor tasks for context. Completion is independent for each task and subtask. Deleting a parent deletes its subtasks, with Undo/Redo restoring the whole branch. Hierarchy and order survive reloads and backups; older tasks become top-level tasks.
+
+## Empty starting workspace (0.21.1)
+
+Fresh installations have no preloaded folders. Use + to create a note at the root, or New folder to organize your own folders. Drag a note onto All notes to move it back to the root. Empty, unchanged starter folders from older installations are removed on upgrade; populated, renamed, and custom folders are preserved. All folders can now be deleted; their notes move to Trash without creating a recovery folder. Version-5 backups support root notes and require 0.21.1 or newer to restore. Older backups remain importable.

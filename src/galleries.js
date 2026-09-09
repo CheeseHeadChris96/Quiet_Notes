@@ -112,7 +112,7 @@
     const encoded=[];for(const p of photos)encoded.push({id:p.id,galleryId:p.galleryId,name:p.name,type:p.type,created:p.created,source:await readImage(p.blob)});
     download(new Blob([JSON.stringify({...data,photos:encoded},null,2)],{type:'application/json'}),name);
   }
-  $('export').onclick=async()=>{try{if(storageFailed){download(new Blob([localStorage.getItem(KEY)||''],{type:'application/json'}),'quiet-notes-recovery.json');return;}const data={version:4,folders,notes};await exportData(data,`quiet-notes-${new Date().toISOString().slice(0,10)}.json`);}catch(error){friendly(error);}};
+  $('export').onclick=async()=>{try{if(storageFailed){download(new Blob([localStorage.getItem(KEY)||''],{type:'application/json'}),'quiet-notes-recovery.json');return;}const data={version:5,folders,notes};await exportData(data,`quiet-notes-${new Date().toISOString().slice(0,10)}.json`);}catch(error){friendly(error);}};
   deleteBackup.onclick=async()=>{try{const raw=localStorage.getItem('quiet-notes-before-folder-delete');if(raw)await exportData(JSON.parse(raw),'quiet-notes-before-folders-deleted.json');}catch(error){friendly(error);}};
   const originalDelete=deleteFolder;deleteFolder=function(id){const galleryIds=folders.filter(f=>f.kind==='gallery').map(f=>f.id);originalDelete(id);if(galleryIds.some(id=>!isGallery(id)))toast('Folder deleted. Its photos are available in More → Export last folder deletion backup.');};
   const progress=document.createElement('dialog');progress.className='gallery-dialog';progress.setAttribute('aria-label','Importing backup');progress.textContent='Importing backup…';progress.oncancel=event=>event.preventDefault();document.body.append(progress);
