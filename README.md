@@ -18,7 +18,7 @@ Mac requires macOS 12 or newer. Open the DMG and drag Quiet Notes into Applicati
 
 Initial installers are unsigned by a verified publisher (Mac uses an ad-hoc signature) and are not Apple-notarized. macOS or Windows may show security prompts; managed-device policies may prevent installation. Publisher signing is a separate release setup step.
 
-Export a backup from **More** in the browser prototype, then import it into the installed app to transfer your notes and photos. Browser and desktop storage are separate. Updates are installed manually; export a backup before upgrading.
+Export a backup from **More** in the browser prototype, then import it into the installed app to transfer your notes and photos. Browser and desktop storage are separate. The installed app checks for new GitHub releases and prompts to download a matching installer. Close the app and run that installer to update; export a backup before upgrading.
 
 ## Run from source
 
@@ -249,3 +249,11 @@ Task order is now manual and stays unchanged when tasks are completed. Filters r
 ## Empty starting workspace (0.21.1)
 
 Fresh installations have no preloaded folders. Use + to create a note at the root, or New folder to organize your own folders. Drag a note onto All notes to move it back to the root. Empty, unchanged starter folders from older installations are removed on upgrade; populated, renamed, and custom folders are preserved. All folders can now be deleted; their notes move to Trash without creating a recovery folder. Version-5 backups support root notes and require 0.21.1 or newer to restore. Older backups remain importable.
+
+## Shared page actions and update checks (0.22.0)
+
+The 48-pixel top bar keeps the centered app name and tabs. Footer pin and trash icons apply to the selected note, to-do page, gallery, or Gantt chart. They stay visible and disabled when nothing is selected. Pinned and Trash include special pages; restoring a page retains its tasks and photos. Gallery photos remain in local storage while the gallery is in Trash and are included in normal backups.
+
+Installed apps check the public GitHub Releases API ten seconds after startup and every six hours. Only a newer stable release with a matching Mac arm64, Mac x64, or Windows x64 installer is offered. More → Check for updates runs an immediate check. Choose Download update to open the matching GitHub download, or Later to postpone that version's reminder for 24 hours. Automatic checks stay quiet if offline or up to date. No GitHub sign-in is needed; no note contents are sent.
+
+The installer must still be run manually after closing the app. Automatic in-place macOS replacement needs publisher signing, which these initial builds do not have. Install 0.22.0 manually once to enable discovery of future versions. Update checking is disabled when running from source or in the browser preview.

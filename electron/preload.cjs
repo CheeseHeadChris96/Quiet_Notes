@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('appUpdates',{check:()=>ipcRenderer.invoke('app:check-updates')});
 contextBridge.exposeInMainWorld('textFiles', {
   open: () => ipcRenderer.invoke('text:open'),
   save: (name, content) => ipcRenderer.invoke('text:save', { name, content })

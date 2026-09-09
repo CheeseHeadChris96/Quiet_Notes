@@ -1,12 +1,14 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard, nativeImage } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, clipboard, nativeImage, shell } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const { pathToFileURL } = require('node:url');
 const page = path.join(__dirname, '../src/index.html');
+let updates=null;
 function trustedWindow(event) {
   if (event.senderFrame !== event.sender.mainFrame || event.senderFrame.url !== pathToFileURL(page).href) throw new Error('Unknown page');
   return BrowserWindow.fromWebContents(event.sender);
 }
+ipcMain.handle('app:check-updates',async event=>{trustedWindow(event);return updates?updates.check(true):{status:'development'};});
 ipcMain.handle('text:open', async event => {
   const win = trustedWindow(event);
   try {
@@ -56,6 +58,19 @@ app.whenReady().then(() => {
     { role: 'editMenu' }, { role: 'viewMenu' }, { role: 'windowMenu' }
   ]));
   createWindow();
+  if(app.isPackaged){
+    const {createChecker}=require('./updates.cjs');
+    const stateFile=path.join(app.getPath('userData'),'update-checks.json');
+    updates=createChecker({version:app.getVersion(),platform:process.platform,arch:process.arch,
+      readState:async()=>JSON.parse(await fs.readFile(stateFile,'utf8')),
+      writeState:state=>fs.writeFile(stateFile,JSON.stringify(state),'utf8'),
+      openExternal:url=>shell.openExternal(url),
+      showMessage:options=>{const win=BrowserWindow.getFocusedWindow()||BrowserWindow.getAllWindows()[0];return win?dialog.showMessageBox(win,options):dialog.showMessageBox(options);}
+    });
+    const start=setTimeout(()=>updates.check(),10000);start.unref();
+    const timer=setInterval(()=>updates.check(),6*60*60*1000);timer.unref();
+    app.on('before-quit',()=>{clearTimeout(start);clearInterval(timer);});
+  }
   app.on('activate', () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });

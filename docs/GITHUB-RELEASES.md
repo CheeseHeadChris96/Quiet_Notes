@@ -23,8 +23,8 @@ Skip `git remote add` if `origin` is already configured. If the commit has alrea
 2. Tag that commit with the matching version. For this build:
 
    ```sh
-   git tag v0.21.1
-   git push origin v0.21.1
+   git tag v0.22.0
+   git push origin v0.22.0
    ```
 
 3. Open the repository's **Actions → Build installers** run. All three builds must pass before the release job runs. Windows checks install the app, launch a window, and run its uninstaller. Mac checks validate the DMG and ad-hoc app signature.
@@ -55,4 +55,4 @@ For a trusted public release, configure an Apple Developer ID certificate and no
 
 ## Data and upgrades
 
-The app ID remains `com.quietnotes.desktop` and the product name remains `Quiet Notes`. Installers do not include personal notes. Local data lives in Electron's user application-data directory and Windows uninstall is configured to preserve it. Export a backup from More before upgrades or moving to another machine. Browser data and installed-app data are separate. No sync or auto-updater is included.
+The app ID remains `com.quietnotes.desktop` and the product name remains `Quiet Notes`. Installers do not include personal notes. Local data lives in Electron's user application-data directory and Windows uninstall is configured to preserve it. Export a backup from More before upgrades or moving to another machine. Browser data and installed-app data are separate. There is no sync. Installed versions 0.22.0 and later automatically check GitHub for newer releases and prompt to open the matching installer; installation remains manual.

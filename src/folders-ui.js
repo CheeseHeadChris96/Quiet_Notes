@@ -18,7 +18,7 @@ drawRecents=function(){
   const all=makeButton('All notes','Browse all notes',()=>browseFolder('*'));all.className='folder-all';all.dataset.folderDrop='*';all.title='All notes · Drop a folder or note here to move it to the root';if(folderFilter==='*')all.setAttribute('aria-current','page');list.append(all);
   const query=folderSearch.value.trim().toLowerCase();
   const visible=new Set();
-  if(query)for(const f of folders.filter(f=>Folders.path(folders,f.id).toLowerCase().includes(query))){let cur=f;while(cur){visible.add(cur.id);cur=folders.find(p=>p.id===cur.parent);}}
+  if(query)for(const f of folders.filter(f=>!f.deleted&&Folders.path(folders,f.id).toLowerCase().includes(query))){let cur=f;while(cur){visible.add(cur.id);cur=folders.find(p=>p.id===cur.parent);}}
   const counts=new Map();for(const n of notes)if(!n.deleted)counts.set(n.folderId,(counts.get(n.folderId)||0)+1);
   function row(f,depth){
     if(query&&!visible.has(f.id))return;

@@ -13,7 +13,7 @@
   const scroller=document.createElement('div');scroller.className='gantt-scroll';const board=document.createElement('div');board.className='gantt-board';scroller.append(board);
   const empty=document.createElement('p');empty.className='gantt-empty';empty.textContent='Add a task or milestone to start your chart.';panel.append(toolbar,help,scroller,empty);
   let currentId=null,first=null,drag=null,links=null;const histories=new Map();
-  const chart=id=>folders.find(f=>f.id===id&&f.kind==='gantt');
+  const chart=id=>folders.find(f=>f.id===id&&f.kind==='gantt'&&!f.deleted);
   function today(){const now=new Date();return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
   const settings=()=>scale.value==='days'?{count:30,px:28}:scale.value==='months'?{count:365,px:4}:{count:90,px:12};
   const clone=tasks=>tasks.map(t=>({...t,dependencies:[...t.dependencies]}));

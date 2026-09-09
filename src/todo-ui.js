@@ -8,7 +8,7 @@
   const list=document.createElement('ul');list.className='todo-list';list.setAttribute('aria-label','To-do tasks');
   const empty=document.createElement('p');empty.className='todo-empty';panel.append(toolbar,list,empty,add);
   const histories=new Map();let currentId=null;
-  const page=id=>folders.find(f=>f.id===id&&f.kind==='todo');
+  const page=id=>folders.find(f=>f.id===id&&f.kind==='todo'&&!f.deleted);
   const copy=items=>items.map(item=>({...item}));
   function historyFor(f){let h=histories.get(f.id);if(!h||JSON.stringify(h.states[h.index])!==JSON.stringify(f.items)){h={states:[copy(f.items)],index:0};histories.set(f.id,h);}return h;}
   function saveItems(id,items,target=null){
