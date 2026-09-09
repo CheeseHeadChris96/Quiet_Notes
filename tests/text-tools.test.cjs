@@ -1,0 +1,4 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {History,matches,replaceAll,filename}=require('../src/text-tools');
+test('undo and redo preserve rich text; edits after undo drop redo',()=>{const a={title:'A',html:'one'},b={title:'A',html:'<b>one</b>'},c={title:'C',html:'three'};const h=new History(a);h.push(b);assert.deepEqual(h.undo(),a);assert.deepEqual(h.redo(),b);h.undo();h.push(c);assert.deepEqual(h.redo(),c);assert.equal(h.values.length,2);});
+test('find and replace treat user text literally',()=>{assert.deepEqual(matches('a.b a.b','a.b'),[0,4]);assert.equal(replaceAll('a.b a.b','a.b','$&'),'$& $&');assert.equal(replaceAll('abc','','x'),'abc');});
+test('file names retain Markdown extension and exclude path separators',()=>{assert.equal(filename('Ideas.md'),'Ideas.md');assert.equal(filename(''), 'Untitled.txt');assert.equal(filename('a/b:c'),'a_b_c.txt');});

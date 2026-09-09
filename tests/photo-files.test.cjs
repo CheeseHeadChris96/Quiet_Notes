@@ -1,0 +1,10 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const vm=require('node:vm');const fs=require('node:fs');const path=require('node:path');const {pathToFileURL}=require('node:url');
+function setup(){
+  const handlers=new Map(),writes=[],copied=[];let cancel=false;
+  const electron={app:{whenReady:()=>({then(){}}),on(){}},BrowserWindow:{fromWebContents:()=>({})},Menu:{},ipcMain:{handle:(name,fn)=>handlers.set(name,fn)},dialog:{showSaveDialog:async()=>({canceled:cancel,filePath:'/chosen/photo.png'})},nativeImage:{createFromBuffer:bytes=>({isEmpty:()=>!bytes.length,bytes})},clipboard:{writeImage:image=>copied.push(image.bytes)}};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../electron/main.cjs'),'utf8'),{require:name=>name==='electron'?electron:name==='node:fs/promises'?{writeFile:async(file,bytes)=>writes.push({file,bytes})}:require(name),__dirname:path.join(__dirname,'../electron'),Buffer,Uint8Array,TextDecoder,process});
+  const frame={url:pathToFileURL(path.resolve(__dirname,'../src/index.html')).href},event={senderFrame:frame,sender:{mainFrame:frame}};
+  return {handlers,writes,copied,event,cancel:()=>{cancel=true;}};
+}
+test('desktop photo save keeps original bytes and respects a cancelled save dialog',async()=>{const s=setup(),bytes=new Uint8Array([137,80,78,71,13,10]);await s.handlers.get('photo:save')(s.event,{name:'photo.png',bytes});assert.equal(s.writes[0].file,'/chosen/photo.png');assert.deepEqual([...s.writes[0].bytes],[...bytes]);s.cancel();assert.equal(await s.handlers.get('photo:save')(s.event,{name:'photo.png',bytes}),null);assert.equal(s.writes.length,1);});
+test('desktop clipboard bridge accepts image bytes only from the app page',async()=>{const s=setup(),bytes=new Uint8Array([1,2,3]);await s.handlers.get('photo:copy')(s.event,bytes);assert.deepEqual([...s.copied[0]],[1,2,3]);const result=await s.handlers.get('photo:copy')({...s.event,senderFrame:{url:'https://untrusted.example'}},bytes);assert.match(result.error,/Unknown page/);assert.equal(s.copied.length,1);assert.ok((await s.handlers.get('photo:copy')(s.event,'not bytes')).error);});

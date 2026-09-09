@@ -1,0 +1,89 @@
+name: Build installers
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.platform }} / ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: mac
+            arch: arm64
+          - os: macos-15
+            platform: mac
+            arch: x64
+          - os: windows-2025
+            platform: win
+            arch: x64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Check release tag matches package version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: node -e 'if (process.env.GITHUB_REF_NAME !== "v" + require("./package.json").version) throw new Error("Tag must match package.json version")'
+      - run: pnpm test
+      - name: Build installer
+        run: pnpm exec electron-builder --${{ matrix.platform }} --${{ matrix.arch }} --publish never
+      - name: Check Mac disk image and app signature
+        if: matrix.platform == 'mac'
+        shell: bash
+        run: |
+          hdiutil verify dist/*.dmg
+          codesign --verify --deep --strict "dist/mac${{ matrix.arch == 'arm64' && '-arm64' || '' }}/Quiet Notes.app"
+      - name: Test Windows installation and launch
+        if: matrix.platform == 'win'
+        shell: pwsh
+        run: ./scripts/check-windows-installer.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.platform }}-${{ matrix.arch }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            dist/*.dmg
+            dist/*-Setup.exe
+
+  release:
+    name: Prepare GitHub release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: installers-*
+          path: release-assets
+          merge-multiple: true
+      - name: Generate checksums
+        working-directory: release-assets
+        run: sha256sum *.dmg *.exe > SHA256SUMS.txt
+      - name: Create draft release and upload installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag --draft --title "Quiet Notes $GITHUB_REF_NAME" --notes-file docs/RELEASE-NOTES.md
+          fi
+          gh release upload "$GITHUB_REF_NAME" release-assets/*

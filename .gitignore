@@ -1,0 +1,9 @@
+node_modules
+outputs/
+work/
+dist/
+.env
+.env.*
+*.p12
+*.pfx
+.DS_Store

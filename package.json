@@ -1,0 +1,64 @@
+{
+  "name": "quiet-notes",
+  "version": "0.21.0",
+  "description": "A quiet place for your everyday notes",
+  "author": "Quiet Notes",
+  "private": true,
+  "main": "electron/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "build:mac": "electron-builder --mac --arm64 --x64 --publish never",
+    "build:win": "electron-builder --win --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^42.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.quietnotes.desktop",
+    "productName": "Quiet Notes",
+    "files": [
+      "src/**/*",
+      "electron/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ],
+      "minimumSystemVersion": "12.0",
+      "identity": "-"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Quiet-Notes-${version}-windows-${arch}-Setup.${ext}",
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "deleteAppDataOnUninstall": false
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "artifactName": "Quiet-Notes-${version}-${os}-${arch}.${ext}",
+    "toolsets": {
+      "nsis": "1.2.1",
+      "wine": "1.0.1"
+    }
+  },
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/CheeseHeadChris96/Quiet_Notes.git"
+  }
+}
